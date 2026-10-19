@@ -39,3 +39,5 @@ contentful-import-error-log-*.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.idea/
+
