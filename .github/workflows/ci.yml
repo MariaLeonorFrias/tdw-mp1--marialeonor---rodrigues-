@@ -153,9 +153,7 @@ jobs:
             --message "PR #${{ github.event.number }} ${{ github.event.pull_request.head.sha }}" \
             2>&1 | tee upload.log
 
-          URL=$(grep -oE 'https://[^[:space:]]+' upload.log | grep 'workers.dev' | tail -n 1)
-          test -n "$URL" || { echo "::error::No preview URL found"; exit 1; }
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          URL=$(grep -o 'Version Preview Alias URL: .*' upload.log | cut -d' ' -f5)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
