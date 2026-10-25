@@ -3,7 +3,7 @@ stages:
   - test
   - build
   - deploy
-# Default Node.js environment for pipeline jobs
+# Node.js environment for pipeline jobs
 default:
   image: node:22
 
