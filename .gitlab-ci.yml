@@ -31,10 +31,13 @@ build:
     expire_in: 1 week
 
 deploy:
-  stage: deploy
-  needs:
-    - job: build
-      artifacts: true
-  script:
-    - npm ci
-    - npx wrangler deploy
+  deploy:
+    stage: deploy
+    needs:
+      - job: build
+        artifacts: true
+    rules:
+      - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    script:
+      - npm ci
+      - npx wrangler deploy
