@@ -2,6 +2,7 @@ stages:
   - quality
   - test
   - build
+  - deploy
 
 default:
   image: node:22
@@ -28,3 +29,15 @@ build:
     paths:
       - out/
     expire_in: 1 week
+
+deploy:
+  stage: deploy
+  needs:
+    - job: build
+      artifacts: true
+  script:
+    - npm ci
+    - npx wrangler deploy
+  variables:
+    CLOUDFLARE_API_TOKEN: $CLOUDFLARE_API_TOKEN
+    CLOUDFLARE_ACCOUNT_ID: $CLOUDFLARE_ACCOUNT_ID
