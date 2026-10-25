@@ -3,29 +3,54 @@ stages:
   - test
   - build
   - deploy
-# Node.js environment for pipeline jobs
-default:
-  image: node:22
 
-code_quality:
+image: node:22
+
+variables:
+  npm_config_cache: '$CI_PROJECT_DIR/.npm'
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+
+before_script:
+  - npm ci --prefer-offline
+
+lint:
   stage: quality
   script:
-    - npm ci
     - npm run lint
+
+format:
+  stage: quality
+  script:
     - npm run format:check
 
-tests:
+test:
   stage: test
   script:
-    - npm ci
     - npm test -- --run
 
 build:
   stage: build
+  needs:
+    - lint
+    - format
+    - test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   script:
-    - npm ci
+    - |
+      if [ "$CI_PIPELINE_SOURCE" = "merge_request_event" ]; then
+        export NEXT_PUBLIC_SHA="$CI_COMMIT_SHA"
+      fi
     - npm run build
   artifacts:
+    name: 'site-$CI_COMMIT_SHORT_SHA'
     paths:
       - out/
     expire_in: 1 week
@@ -36,7 +61,28 @@ deploy:
     - job: build
       artifacts: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
   script:
-    - npm ci
     - npx wrangler deploy
+
+preview:
+  stage: deploy
+  needs:
+    - job: build
+      artifacts: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - |
+      ALIAS="mr-${CI_MERGE_REQUEST_IID}"
+      npx wrangler versions upload \
+        --preview-alias "$ALIAS" \
+        --message "MR !${CI_MERGE_REQUEST_IID} ${CI_COMMIT_SHA}" \
+        | tee upload.log
+    - |
+      URL=$(grep -o 'Version Preview Alias URL: .*' upload.log | cut -d' ' -f5)
+      test -n "$URL" || {
+        echo "ERROR: Wrangler did not return a preview URL"
+        exit 1
+      }
+      echo "Preview URL: $URL"
