@@ -5,8 +5,7 @@ on:
   pull_request:
   repository_dispatch:
     types: [contentful-update]
-  schedule:
-    - cron: '0 0 * * *'
+
 
 permissions:
   contents: read
