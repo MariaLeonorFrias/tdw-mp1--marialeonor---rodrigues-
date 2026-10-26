@@ -179,3 +179,5 @@ Testing the pull request preview deployment.
 
 This project is based on the original work by **Francisco Regalado**:
 [https://github.com/TDW-2025/MP1](https://github.com/TDW-2025/MP1)
+
+CI/CD pipeline demonstration.
